@@ -1,7 +1,5 @@
 package com.devanalyzer.dev_profile_api.github;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -26,4 +24,5 @@ public class GitHubService {
         // TODO : Retourner l'array de repositories
         return repositories;
     }
+    
 }
