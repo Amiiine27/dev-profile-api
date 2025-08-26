@@ -24,5 +24,4 @@ public class GitHubService {
         // TODO : Retourner l'array de repositories
         return repositories;
     }
-    
 }
