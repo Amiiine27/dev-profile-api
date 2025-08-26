@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: dev-profile-api
+  security:
+    user:
+      name: admin
+      password: password
+      roles: ADMIN
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23limyiaaUfEltQZAO
+            client-secret: e063625aeeccd6f86644810901cf7c7ba88b59c1
+            scope: read:user
