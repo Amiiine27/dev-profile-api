@@ -1,5 +1,6 @@
 package com.devanalyzer.dev_profile_api.github;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,43 +87,66 @@ public class GitHubController {
     @Autowired
     private UserAnalysisService analysisService;
 
+    @Autowired
+    private UserAnalysisRepository userAnalysisRepository;
+
     // ENDPOINT : Analyser le profil utilisateur
     @GetMapping("/api/analysis")
     public ResponseEntity<?> userAnalysis(@AuthenticationPrincipal OAuth2User user) {
         
-        // TODO : Vérifier si l'utilisateur est connecté via OAuth
-        if(user==null){
-            // Si null, retourner ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("message")
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Impossible de trouver un utilisateur connecté, réésayez de vous connecter pour analyser vos données");
+        if(user == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Non connecté");
         }
         
-        // TODO : Récupérer le username GitHub depuis l'utilisateur OAuth
         String username = user.getAttribute("login");
         
         try {
-            // TODO : Appeler gitHubService.getUserRepositories(username) pour récupérer les repos
+            // TODO : Récupérer les repositories GitHub avec gitHubService.getUserRepositories()
             GitHubRepository[] repos = gitHubService.getUserRepositories(username);
             
-            // TODO : Appeler analysisService.analyzeLanguages(repos) pour analyser les langages
-            Map<String, Integer> nbLangages = analysisService.analyzeLanguages(repos);
-            
-            // TODO : Appeler analysisService.calculateActivityScore(repos) pour calculer le score
-            Integer score = analysisService.calculateActivityScore(repos);
-            
-            // TODO : Créer un String résultat qui affiche :
-            // - Le username
-            // - Le score d'activité  
-            // - La répartition des langages (utiliser .toString() sur la Map)
+            // TODO : Sauvegarder l'analyse avec analysisService.saveUserAnalysis()
+            // Cette méthode calcule ET sauvegarde en une fois
+            UserAnalysis savedAnalysis = analysisService.saveUserAnalysis(username, repos);
 
-            String resultat = String.format(("Bonjour Repositor ! Nom de code : %s | \t Votre score s'élève à %s ! \n Voici la répartition de vos langages :" 
-                                + "\n" + "%s"), username, score, nbLangages.toString());
+            // AJOUT : Log pour debug
+            System.out.println("Analyse sauvegardée avec ID: " + savedAnalysis.getId());
+
+            // AJOUT : Vérification immédiate en base
+            List<UserAnalysis> verification = userAnalysisRepository.findByUsername(username);
+            System.out.println("Nombre d'analyses trouvées: " + verification.size());
             
-            // TODO : Retourner ResponseEntity.ok(resultat)
-            return ResponseEntity.ok(resultat);
+            // TODO : Créer un message formaté avec les données de l'analyse sauvegardée
+            // Utiliser savedAnalysis.getActivityScore() et savedAnalysis.getLanguagesData()
+            String message = String.format(("Hello Repositor !" 
+                                            + "<br/>"
+                                            + "Nom de code %s"
+                                            + "<br/>"
+                                            + "Voici ton SCORE D'ACTIVITÉ : %s."
+                                            + "<br/>"
+                                            + "Ainsi que les differents langages que tu as pu expérimenter : %s "),
+                                            username, savedAnalysis.getActivityScore(), savedAnalysis.getLanguagesData().toString());
+            
+            // TODO : Retourner ResponseEntity.ok() avec le message
+            return ResponseEntity.ok().body(message);
             
         } catch (Exception e) {
-            // TODO : Retourner une erreur 500 avec message d'erreur approprié
-            return ResponseEntity.status(500).body("Veuillez nous excuser, une erreur serveur nous empêche d'acceder a vos informations, réessayez s'il-vous-plait !");
+            return ResponseEntity.status(500).body("Erreur lors de l'analyse");
         }
+    }
+
+    @GetMapping("/api/analysis/history")
+    public ResponseEntity<?> analysisHistory(@AuthenticationPrincipal OAuth2User user) {
+        
+        if(user == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Non connecté");
+        }
+        
+        String username = user.getAttribute("login");
+        
+        // TODO : Utiliser userAnalysisRepository.findByUsername() pour récupérer l'historique
+        List<UserAnalysis> savedAnalysis = userAnalysisRepository.findByUsername(username);
+        
+        // TODO : Retourner la liste des analyses
+        return ResponseEntity.ok().body(savedAnalysis);
     }
 }
