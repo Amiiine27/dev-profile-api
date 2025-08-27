@@ -28,7 +28,7 @@ interface GitHubRepository {
 
 interface UserAnalysis{
     username: string;
-    activity_score: number;
+    activity_score: number;  // Changé de activityScore à activity_score
     totalRepositories: number;
     createdOn: string;
     languages: { [key: string]: number };
@@ -64,15 +64,12 @@ class ApiService {
   
   // MÉTHODE : Récupérer l'analyse complète
   async getAnalysis(forceRefresh = false): Promise<UserAnalysis> {
-    // TODO : Appeler GET /api/analysis?forceRefresh={forceRefresh}
-    // Retourner response.data
-    try{
-    const response: AxiosResponse<UserAnalysis> = await api.get<UserAnalysis>(`/api/analysis`)
-    return response.data;
-    } catch (e){
-        throw new Error("Erreur lors du chargement des Analyses");
+    try {
+      const response: AxiosResponse<UserAnalysis> = await api.get<UserAnalysis>(`/analysis${forceRefresh ? '?forceRefresh=true' : ''}`);
+      return response.data;
+    } catch (e) {
+      throw new Error("Erreur lors du chargement des Analyses");
     }
-    
   }
   
   // MÉTHODE : Récupérer l'historique des analyses

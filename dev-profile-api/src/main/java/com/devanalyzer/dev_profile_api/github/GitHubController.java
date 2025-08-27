@@ -92,7 +92,7 @@ public class GitHubController {
     private UserAnalysisRepository userAnalysisRepository;
 
     // ENDPOINT : Analyser le profil utilisateur
-    @GetMapping("/analysis")
+    @GetMapping("/analysis")  // Suppression du /api car déjà dans @RequestMapping
     public ResponseEntity<?> userAnalysis(@AuthenticationPrincipal OAuth2User user) {
         
         if(user == null){
@@ -102,33 +102,27 @@ public class GitHubController {
         String username = user.getAttribute("login");
         
         try {
-            // TODO : Récupérer les repositories GitHub avec gitHubService.getUserRepositories()
+            // Récupérer les repositories GitHub
             GitHubRepository[] repos = gitHubService.getUserRepositories(username);
             
-            // TODO : Sauvegarder l'analyse avec analysisService.saveUserAnalysis()
-            // Cette méthode calcule ET sauvegarde en une fois
+            // Sauvegarder l'analyse
             UserAnalysis savedAnalysis = analysisService.saveUserAnalysis(username, repos);
 
-            // AJOUT : Log pour debug
+            // Logs de debug
             System.out.println("Analyse sauvegardée avec ID: " + savedAnalysis.getId());
-
-            // AJOUT : Vérification immédiate en base
             List<UserAnalysis> verification = userAnalysisRepository.findByUsername(username);
             System.out.println("Nombre d'analyses trouvées: " + verification.size());
             
-            // TODO : Créer un message formaté avec les données de l'analyse sauvegardée
-            // Utiliser savedAnalysis.getActivityScore() et savedAnalysis.getLanguagesData()
-            String message = String.format(("Hello Repositor !" 
-                                            + "<br/>"
-                                            + "Nom de code %s"
-                                            + "<br/>"
-                                            + "Voici ton SCORE D'ACTIVITÉ : %s."
-                                            + "<br/>"
-                                            + "Ainsi que les differents langages que tu as pu expérimenter : %s "),
-                                            username, savedAnalysis.getActivityScore(), savedAnalysis.getLanguagesData().toString());
+            // Création objet de réponse structuré pour React
+            Map<String, Object> response = new HashMap<>();
+            response.put("username", username);
+            response.put("activity_score", savedAnalysis.getActivityScore());
+            response.put("totalRepositories", repos.length);
+            response.put("languages", savedAnalysis.getLanguagesData());
+            response.put("fromCache", false);
+            response.put("createdOn", savedAnalysis.getCreatedAt().toString());
             
-            // TODO : Retourner ResponseEntity.ok() avec le message
-            return ResponseEntity.ok().body(message);
+            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Erreur lors de l'analyse");

@@ -28,6 +28,7 @@ export default function Dashboard({ user }: DashboardProps) {
         if(analysis !== null ){
             setAnalysis(analysis)
         }
+        console.log(analysis, "analyses chargées")
         console.log("Dashboard chargé sans appels API");
       } catch (error) {
         console.error("Erreur chargement dashboard:", error);
