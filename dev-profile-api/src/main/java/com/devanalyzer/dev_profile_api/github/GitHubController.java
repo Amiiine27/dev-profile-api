@@ -1,5 +1,6 @@
 package com.devanalyzer.dev_profile_api.github;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,10 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 // ANNOTATION : Indique que cette classe est un contrôleur REST
 @RestController
+@RequestMapping("/api")  // Préfixe /api
 public class GitHubController {
     
     // ENDPOINT 1 : Page d'accueil sur "/"
@@ -33,26 +36,24 @@ public class GitHubController {
 
     // ENDPOINT 3 : Afficher les infos de l'utilisateur GitHub connecté
     // ANNOTATION : Mappe les requêtes GET sur /api/profile
-    @GetMapping("/api/profile")
-    public String userProfile(@AuthenticationPrincipal OAuth2User user) {
+    @GetMapping("/profile")
+    public ResponseEntity<Map<String, Object>> userProfile(@AuthenticationPrincipal OAuth2User user) {
     
-        // VÉRIFICATION : L'utilisateur est-il connecté via OAuth ?
         if (user == null) {
-            // TODO : Retourne un message pour utilisateur non connecté via OAuth
-            return "Utilisateur non connecté via oAuth";
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
         
-        // RÉCUPÉRATION : Nom d'utilisateur GitHub
-        String username = user.getAttribute("login");
-        
-        // RÉCUPÉRATION : Nom complet (peut être null)
-        String fullName = user.getAttribute("name");
-
-        String avatar = user.getAttribute("profilePicture");
-        
-        // TODO : Retourne les informations formatées
-        return "L'utilisateur : " + username + " s'appelle " + fullName + avatar;
-    }
+    // MAPPING : GitHub attributes vers format API standard
+    Map<String, Object> profile = new HashMap<>();
+    profile.put("username", user.getAttribute("login"));
+    profile.put("name", user.getAttribute("name"));
+    profile.put("email", user.getAttribute("email"));
+    profile.put("publicRepos", user.getAttribute("public_repos"));
+    profile.put("followers", user.getAttribute("followers"));
+    profile.put("avatarUrl", user.getAttribute("avatar_url"));
+    
+    return ResponseEntity.ok(profile);
+}
 
     @Autowired
     private GitHubService gitHubService;
@@ -91,7 +92,7 @@ public class GitHubController {
     private UserAnalysisRepository userAnalysisRepository;
 
     // ENDPOINT : Analyser le profil utilisateur
-    @GetMapping("/api/analysis")
+    @GetMapping("/analysis")
     public ResponseEntity<?> userAnalysis(@AuthenticationPrincipal OAuth2User user) {
         
         if(user == null){
